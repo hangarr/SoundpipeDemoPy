@@ -7,18 +7,18 @@ from ctypes import *
 
 from modules.dr_wav import *
 
-# for now, assume libsound.so found in "soundpipe" folder next to this project folder
+# for now, assume libsoundpipe.so found in "soundpipe" folder next to this project folder
 
-libpath = "../../../soundpipe"
-libname = os.path.abspath(os.path.join(libpath, "libsoundpipe.so"))
+sp_libpath = "../../../soundpipe"
+sp_libname = os.path.abspath(os.path.join(sp_libpath, "libsoundpipe.so"))
 
-#print('%s' % libname)
+#print('%s' % sp_libname)
 
-libsoundpipe = CDLL(libname)
+libsoundpipe = CDLL(sp_libname)
 
 # function to wrap a C function in a Python function
 
-def wrap_function(lib, funcname, restype, argtypes):
+def sp_wrap_function(lib, funcname, restype, argtypes):
     func = lib.__getattr__(funcname)
     func.restype = restype
     func.argtypes = argtypes
@@ -62,11 +62,13 @@ class sp_data(Structure):
 # int sp_create(sp_data **spp);
 # int sp_destroy(sp_data **spp);
 
-sp_create = wrap_function(libsoundpipe, 'sp_create', c_int, [POINTER(POINTER(sp_data))]);
-sp_destroy = wrap_function(libsoundpipe, 'sp_destroy', c_int, [POINTER(POINTER(sp_data))]);
+sp_create = sp_wrap_function(libsoundpipe, 'sp_create', c_int,
+                             [POINTER(POINTER(sp_data))]);
+sp_destroy = sp_wrap_function(libsoundpipe, 'sp_destroy', c_int,
+                              [POINTER(POINTER(sp_data))]);
 
-# NOTE: The wavin and wavout modules use the drwav package.  The structures include members
-# for the drwav structure.  See dr_wav.py for more info.
+# NOTE: The wavin and wavout modules use the drwav package.  The structures include
+# members for the drwav structure.  See dr_wav.py for more info.
 
 # -------------------
 # wavein
@@ -101,13 +103,14 @@ class sp_wavin(Structure):
 # int sp_wavin_init(sp_data *sp, sp_wavin *p, const char *filename);
 # int sp_wavin_compute(sp_data *sp, sp_wavin *p, SPFLOAT *in, SPFLOAT *out);
 
-sp_wavin_create = wrap_function(libsoundpipe, 'sp_wavin_create', c_int, 
+sp_wavin_create = sp_wrap_function(libsoundpipe, 'sp_wavin_create', c_int, 
+                                   [POINTER(POINTER(sp_wavin))])
+sp_wavin_destroy = sp_wrap_function(libsoundpipe, 'sp_wavin_destroy', c_int,
                                     [POINTER(POINTER(sp_wavin))])
-sp_wavin_destroy = wrap_function(libsoundpipe, 'sp_wavin_destroy', c_int,
-                                    [POINTER(POINTER(sp_wavin))])
-sp_wavin_init = wrap_function(libsoundpipe, 'sp_wavin_init', c_int,
-                                    [POINTER(sp_data), POINTER(sp_wavin), POINTER(c_char)])
-sp_wavin_compute = wrap_function(libsoundpipe, 'sp_wavin_compute', c_int,
+sp_wavin_init = sp_wrap_function(libsoundpipe, 'sp_wavin_init', c_int,
+                                 [POINTER(sp_data), POINTER(sp_wavin),
+                                  POINTER(c_char)])
+sp_wavin_compute = sp_wrap_function(libsoundpipe, 'sp_wavin_compute', c_int,
                                     [POINTER(sp_data), POINTER(sp_wavin), 
                                      POINTER(SPFLOAT), POINTER(SPFLOAT)])
 
@@ -142,13 +145,175 @@ class sp_wavout(Structure):
 # int sp_wavout_init(sp_data *sp, sp_wavout *p, const char *filename);
 # int sp_wavout_compute(sp_data *sp, sp_wavout *p, SPFLOAT *in, SPFLOAT *out);
 
-sp_wavout_create = wrap_function(libsoundpipe, 'sp_wavout_create', c_int, 
+sp_wavout_create = sp_wrap_function(libsoundpipe, 'sp_wavout_create', c_int, 
+                                    [POINTER(POINTER(sp_wavout))])
+sp_wavout_destroy = sp_wrap_function(libsoundpipe, 'sp_wavout_destroy', c_int,
                                      [POINTER(POINTER(sp_wavout))])
-sp_wavout_destroy = wrap_function(libsoundpipe, 'sp_wavout_destroy', c_int,
-                                     [POINTER(POINTER(sp_wavout))])
-sp_wavout_init = wrap_function(libsoundpipe, 'sp_wavout_init', c_int,
-                                     [POINTER(sp_data), POINTER(sp_wavout), POINTER(c_char)])
-sp_wavout_compute = wrap_function(libsoundpipe, 'sp_wavout_compute', c_int,
+sp_wavout_init = sp_wrap_function(libsoundpipe, 'sp_wavout_init', c_int,
+                                  [POINTER(sp_data), POINTER(sp_wavout),
+                                   POINTER(c_char)])
+sp_wavout_compute = sp_wrap_function(libsoundpipe, 'sp_wavout_compute', c_int,
                                      [POINTER(sp_data), POINTER(sp_wavout), 
                                       POINTER(SPFLOAT), POINTER(SPFLOAT)])
+
+
+# -------------------
+# butbp
+# -------------------
+
+# typedef struct {
+#     SPFLOAT sr, freq, bw, istor;
+#     SPFLOAT lkf, lkb;
+#     SPFLOAT a[8];
+#     SPFLOAT pidsr, tpidsr;
+# } sp_butbp;
+
+SPFLOATArr8 = SPFLOAT * 8
+
+class sp_butbp(Structure):
+    _fields_ = [
+        ("sr", SPFLOAT),
+        ("freq", SPFLOAT),
+        ("bw", SPFLOAT),
+        ("istor", SPFLOAT),
+        ("lkf", SPFLOAT),
+        ("lkb", SPFLOAT),
+        ("a", SPFLOATArr8),
+        ("pidsr", SPFLOAT),
+        ("tpidsr", SPFLOAT)
+        ]
+
+# int sp_butbp_create(sp_butbp **p);
+# int sp_butbp_destroy(sp_butbp **p);
+# int sp_butbp_init(sp_data *sp, sp_butbp *p);
+# int sp_butbp_compute(sp_data *sp, sp_butbp *p, SPFLOAT *in, SPFLOAT *out);
+
+sp_butbp_create = sp_wrap_function(libsoundpipe, 'sp_butbp_create', c_int, 
+                                   [POINTER(POINTER(sp_butbp))])
+sp_butbp_destroy = sp_wrap_function(libsoundpipe, 'sp_butbp_destroy', c_int,
+                                    [POINTER(POINTER(sp_butbp))])
+sp_butbp_init = sp_wrap_function(libsoundpipe, 'sp_butbp_init', c_int,
+                                 [POINTER(sp_data), POINTER(sp_butbp),
+                                  POINTER(c_char)])
+sp_butbp_compute = sp_wrap_function(libsoundpipe, 'sp_butbp_compute', c_int,
+                                    [POINTER(sp_data), POINTER(sp_butbp), 
+                                     POINTER(SPFLOAT), POINTER(SPFLOAT)])
+
+
+# -------------------
+# butbr
+# -------------------
+
+# typedef struct {
+#     SPFLOAT sr, freq, bw, istor;
+#     SPFLOAT lkf, lkb;
+#     SPFLOAT a[8];
+#     SPFLOAT pidsr, tpidsr;
+# } sp_butbr;
+
+class sp_butbr(Structure):
+    _fields_ = [
+        ("sr", SPFLOAT),
+        ("freq", SPFLOAT),
+        ("bw", SPFLOAT),
+        ("istor", SPFLOAT),
+        ("lkf", SPFLOAT),
+        ("lkb", SPFLOAT),
+        ("a", SPFLOATArr8),
+        ("pidsr", SPFLOAT),
+        ("tpidsr", SPFLOAT)
+        ]
+
+# int sp_butbr_create(sp_butbr **p);
+# int sp_butbr_destroy(sp_butbr **p);
+# int sp_butbr_init(sp_data *sp, sp_butbr *p);
+# int sp_butbr_compute(sp_data *sp, sp_butbr *p, SPFLOAT *in, SPFLOAT *out);
+
+sp_butbr_create = sp_wrap_function(libsoundpipe, 'sp_butbr_create', c_int, 
+                                   [POINTER(POINTER(sp_butbr))])
+sp_butbr_destroy = sp_wrap_function(libsoundpipe, 'sp_butbr_destroy', c_int,
+                                    [POINTER(POINTER(sp_butbr))])
+sp_butbr_init = sp_wrap_function(libsoundpipe, 'sp_butbr_init', c_int,
+                                 [POINTER(sp_data), POINTER(sp_butbr), 
+                                  POINTER(c_char)])
+sp_butbr_compute = sp_wrap_function(libsoundpipe, 'sp_butbr_compute', c_int,
+                                    [POINTER(sp_data), POINTER(sp_butbr), 
+                                     POINTER(SPFLOAT), POINTER(SPFLOAT)])
+
+
+# -------------------
+# buthp
+# -------------------
+
+# typedef struct  {
+#     SPFLOAT sr, freq, istor;
+#     SPFLOAT lkf;
+#     SPFLOAT a[8];
+#     SPFLOAT pidsr;
+# } sp_buthp;
+
+class sp_buthp(Structure):
+    _fields_ = [
+        ("sr", SPFLOAT),
+        ("freq", SPFLOAT),
+        ("istor", SPFLOAT),
+        ("lkf", SPFLOAT),
+        ("a", SPFLOATArr8),
+        ("pidsr", SPFLOAT)
+        ]
+
+
+# int sp_buthp_create(sp_buthp **p);
+# int sp_buthp_destroy(sp_buthp **p);
+# int sp_buthp_init(sp_data *sp, sp_buthp *p);
+# int sp_buthp_compute(sp_data *sp, sp_buthp *p, SPFLOAT *in, SPFLOAT *out);
+
+sp_buthp_create = sp_wrap_function(libsoundpipe, 'sp_buthp_create', c_int, 
+                                   [POINTER(POINTER(sp_buthp))])
+sp_buthp_destroy = sp_wrap_function(libsoundpipe, 'sp_buthp_destroy', c_int,
+                                    [POINTER(POINTER(sp_buthp))])
+sp_buthp_init = sp_wrap_function(libsoundpipe, 'sp_buthp_init', c_int,
+                                 [POINTER(sp_data), POINTER(sp_buthp),
+                                  POINTER(c_char)])
+sp_buthp_compute = sp_wrap_function(libsoundpipe, 'sp_buthp_compute', c_int,
+                                    [POINTER(sp_data), POINTER(sp_buthp), 
+                                     POINTER(SPFLOAT), POINTER(SPFLOAT)])
+
+
+# -------------------
+# butlp
+# -------------------
+
+# typedef struct  {
+#     SPFLOAT sr, freq, istor;
+#     SPFLOAT lkf;
+#     SPFLOAT a[8];
+#     SPFLOAT pidsr;
+# } sp_butlp;
+
+class sp_butlp(Structure):
+    _fields_ = [
+        ("sr", SPFLOAT),
+        ("freq", SPFLOAT),
+        ("istor", SPFLOAT),
+        ("lkf", SPFLOAT),
+        ("a", SPFLOATArr8),
+        ("pidsr", SPFLOAT)
+        ]
+
+# int sp_butlp_create(sp_butlp **p);
+# int sp_butlp_destroy(sp_butlp **p);
+# int sp_butlp_init(sp_data *sp, sp_butlp *p);
+# int sp_butlp_compute(sp_data *sp, sp_butlp *p, SPFLOAT *in, SPFLOAT *out);
+
+sp_butlp_create = sp_wrap_function(libsoundpipe, 'sp_butlp_create', c_int, 
+                                   [POINTER(POINTER(sp_butlp))])
+sp_butlp_destroy = sp_wrap_function(libsoundpipe, 'sp_butlp_destroy', c_int,
+                                    [POINTER(POINTER(sp_butlp))])
+sp_butlp_init = sp_wrap_function(libsoundpipe, 'sp_butlp_init', c_int,
+                                 [POINTER(sp_data), POINTER(sp_butlp),
+                                  POINTER(c_char)])
+sp_butlp_compute = sp_wrap_function(libsoundpipe, 'sp_butlp_compute', c_int,
+                                    [POINTER(sp_data), POINTER(sp_butlp), 
+                                     POINTER(SPFLOAT), POINTER(SPFLOAT)])
 
