@@ -11,7 +11,7 @@ import getopt
 from modules.soundpipe import *
 
 #====================================================
-# sum utility functions
+# some utility functions
 #----------------------------------------------------
 #---------------------
 # splitpath
@@ -267,11 +267,14 @@ def main():
     # data buffer just to structure design
 
     din = SPFLOAT(0.0)
-    dout = (SPFLOAT * CHANS)()
+    dout = (SPFLOAT * CHANS)(*range(CHANS))
+
 
     # have to create actual storage here
-#    sp[0].out = POINTER(SPFLOAT)(pointer(SPFLOAT()))
-    sp[0].out = POINTER(SPFLOAT)(pointer((SPFLOAT * CHANS)()))
+    # oarr is actually a pointer to the first SPFLOAT in the array
+
+    oarr = (SPFLOAT * CHANS)(*range(CHANS))   
+    sp[0].out = cast(oarr, POINTER(SPFLOAT))
     sp[0].nchan = c_int(CHANS)
 
 

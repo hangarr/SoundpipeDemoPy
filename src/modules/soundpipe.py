@@ -46,7 +46,7 @@ SP_RANDMAX = 2147483648
 #     uint32_t rand;
 # } sp_data;
 
-CharArr200 = c_char * 200
+SP_CharArr200 = c_char * 200
 
 class sp_data(Structure):
     _fields_ = [
@@ -55,7 +55,7 @@ class sp_data(Structure):
         ("nchan", c_int),
         ("len", c_ulong),
         ("pos", c_ulong),
-        ("filename", CharArr200),
+        ("filename", SP_CharArr200),
         ("rand", c_uint32)
         ]
 
@@ -85,12 +85,12 @@ sp_destroy = sp_wrap_function(libsoundpipe, 'sp_destroy', c_int,
 #     unsigned long buf_end;
 # } sp_wavin;
 
-WAVIN_BUFSIZE = 1024
-SPFLOATArrWAVIN_BUFSIZE = SPFLOAT * WAVIN_BUFSIZE
+SP_WAVIN_BUFSIZE = 1024
+SP_SPFLOATArrWAVIN_BUFSIZE = SPFLOAT * SP_WAVIN_BUFSIZE
 
 class sp_wavin(Structure):
     _fields_ = [
-        ("buf", SPFLOATArrWAVIN_BUFSIZE),
+        ("buf", SP_SPFLOATArrWAVIN_BUFSIZE),
         ("count", c_int),
         ("wav", Drwav),
         ("pos", c_ulong),
@@ -129,14 +129,14 @@ sp_wavin_compute = sp_wrap_function(libsoundpipe, 'sp_wavin_compute', c_int,
 #     int count;
 # };
 
-WAVOUT_BUFSIZE = 1024
-SPFLOATArrWAVOUT_BUFSIZE = SPFLOAT * WAVOUT_BUFSIZE
+SP_WAVOUT_BUFSIZE = 1024
+SP_SPFLOATArrWAVOUT_BUFSIZE = SPFLOAT * SP_WAVOUT_BUFSIZE
 
 class sp_wavout(Structure):
     _fields_ = [
         ("wav", POINTER(Drwav)),
         ("format", Drwav_data_format),
-        ("buf", SPFLOATArrWAVOUT_BUFSIZE),
+        ("buf", SP_SPFLOATArrWAVOUT_BUFSIZE),
         ("count", c_int)
         ]
 
@@ -168,7 +168,7 @@ sp_wavout_compute = sp_wrap_function(libsoundpipe, 'sp_wavout_compute', c_int,
 #     SPFLOAT pidsr, tpidsr;
 # } sp_butbp;
 
-SPFLOATArr8 = SPFLOAT * 8
+SP_SPFLOATArr8 = SPFLOAT * 8
 
 class sp_butbp(Structure):
     _fields_ = [
@@ -178,7 +178,7 @@ class sp_butbp(Structure):
         ("istor", SPFLOAT),
         ("lkf", SPFLOAT),
         ("lkb", SPFLOAT),
-        ("a", SPFLOATArr8),
+        ("a", SP_SPFLOATArr8),
         ("pidsr", SPFLOAT),
         ("tpidsr", SPFLOAT)
         ]
@@ -193,8 +193,7 @@ sp_butbp_create = sp_wrap_function(libsoundpipe, 'sp_butbp_create', c_int,
 sp_butbp_destroy = sp_wrap_function(libsoundpipe, 'sp_butbp_destroy', c_int,
                                     [POINTER(POINTER(sp_butbp))])
 sp_butbp_init = sp_wrap_function(libsoundpipe, 'sp_butbp_init', c_int,
-                                 [POINTER(sp_data), POINTER(sp_butbp),
-                                  POINTER(c_char)])
+                                 [POINTER(sp_data), POINTER(sp_butbp)])
 sp_butbp_compute = sp_wrap_function(libsoundpipe, 'sp_butbp_compute', c_int,
                                     [POINTER(sp_data), POINTER(sp_butbp), 
                                      POINTER(SPFLOAT), POINTER(SPFLOAT)])
@@ -219,7 +218,7 @@ class sp_butbr(Structure):
         ("istor", SPFLOAT),
         ("lkf", SPFLOAT),
         ("lkb", SPFLOAT),
-        ("a", SPFLOATArr8),
+        ("a", SP_SPFLOATArr8),
         ("pidsr", SPFLOAT),
         ("tpidsr", SPFLOAT)
         ]
@@ -234,8 +233,7 @@ sp_butbr_create = sp_wrap_function(libsoundpipe, 'sp_butbr_create', c_int,
 sp_butbr_destroy = sp_wrap_function(libsoundpipe, 'sp_butbr_destroy', c_int,
                                     [POINTER(POINTER(sp_butbr))])
 sp_butbr_init = sp_wrap_function(libsoundpipe, 'sp_butbr_init', c_int,
-                                 [POINTER(sp_data), POINTER(sp_butbr), 
-                                  POINTER(c_char)])
+                                 [POINTER(sp_data), POINTER(sp_butbr)])
 sp_butbr_compute = sp_wrap_function(libsoundpipe, 'sp_butbr_compute', c_int,
                                     [POINTER(sp_data), POINTER(sp_butbr), 
                                      POINTER(SPFLOAT), POINTER(SPFLOAT)])
@@ -258,7 +256,7 @@ class sp_buthp(Structure):
         ("freq", SPFLOAT),
         ("istor", SPFLOAT),
         ("lkf", SPFLOAT),
-        ("a", SPFLOATArr8),
+        ("a", SP_SPFLOATArr8),
         ("pidsr", SPFLOAT)
         ]
 
@@ -273,8 +271,7 @@ sp_buthp_create = sp_wrap_function(libsoundpipe, 'sp_buthp_create', c_int,
 sp_buthp_destroy = sp_wrap_function(libsoundpipe, 'sp_buthp_destroy', c_int,
                                     [POINTER(POINTER(sp_buthp))])
 sp_buthp_init = sp_wrap_function(libsoundpipe, 'sp_buthp_init', c_int,
-                                 [POINTER(sp_data), POINTER(sp_buthp),
-                                  POINTER(c_char)])
+                                 [POINTER(sp_data), POINTER(sp_buthp)])
 sp_buthp_compute = sp_wrap_function(libsoundpipe, 'sp_buthp_compute', c_int,
                                     [POINTER(sp_data), POINTER(sp_buthp), 
                                      POINTER(SPFLOAT), POINTER(SPFLOAT)])
@@ -297,7 +294,7 @@ class sp_butlp(Structure):
         ("freq", SPFLOAT),
         ("istor", SPFLOAT),
         ("lkf", SPFLOAT),
-        ("a", SPFLOATArr8),
+        ("a", SP_SPFLOATArr8),
         ("pidsr", SPFLOAT)
         ]
 
@@ -311,9 +308,42 @@ sp_butlp_create = sp_wrap_function(libsoundpipe, 'sp_butlp_create', c_int,
 sp_butlp_destroy = sp_wrap_function(libsoundpipe, 'sp_butlp_destroy', c_int,
                                     [POINTER(POINTER(sp_butlp))])
 sp_butlp_init = sp_wrap_function(libsoundpipe, 'sp_butlp_init', c_int,
-                                 [POINTER(sp_data), POINTER(sp_butlp),
-                                  POINTER(c_char)])
+                                 [POINTER(sp_data), POINTER(sp_butlp)])
 sp_butlp_compute = sp_wrap_function(libsoundpipe, 'sp_butlp_compute', c_int,
                                     [POINTER(sp_data), POINTER(sp_butlp), 
                                      POINTER(SPFLOAT), POINTER(SPFLOAT)])
 
+
+# -------------------
+# hilbert
+# -------------------
+
+# typedef struct {
+#     SPFLOAT xnm1[12], ynm1[12], coef[12];
+# } sp_hilbert;
+
+SP_SPFLOATArr12 = SPFLOAT * 12
+
+class sp_hilbert(Structure):
+    _fields_ = [
+        ("xnm1", SP_SPFLOATArr12),
+        ("ynm1", SP_SPFLOATArr12),
+        ("coef", SP_SPFLOATArr12)
+        ]
+
+# int sp_hilbert_create(sp_hilbert **p);
+# int sp_hilbert_destroy(sp_hilbert **p);
+# int sp_hilbert_init(sp_data *sp, sp_hilbert *p);
+# int sp_hilbert_compute(sp_data *sp, sp_hilbert *p, SPFLOAT *in, SPFLOAT *out1,
+#                        SPFLOAT *out2);
+
+sp_hilbert_create = sp_wrap_function(libsoundpipe, 'sp_hilbert_create', c_int, 
+                                     [POINTER(POINTER(sp_hilbert))])
+sp_hilbert_destroy = sp_wrap_function(libsoundpipe, 'sp_hilbert_destroy', c_int,
+                                      [POINTER(POINTER(sp_hilbert))])
+sp_hilbert_init = sp_wrap_function(libsoundpipe, 'sp_hilbert_init', c_int,
+                                   [POINTER(sp_data), POINTER(sp_hilbert)])
+sp_hilbert_compute = sp_wrap_function(libsoundpipe, 'sp_hilbert_compute', c_int,
+                                      [POINTER(sp_data), POINTER(sp_hilbert), 
+                                       POINTER(SPFLOAT), POINTER(SPFLOAT),
+                                       POINTER(SPFLOAT)])

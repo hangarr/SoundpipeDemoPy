@@ -3,7 +3,6 @@ tests/.DS_Store
 src/.DS_Store
 src/external/.DS_Store
 src/modules/.DS_Store
-test/.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
