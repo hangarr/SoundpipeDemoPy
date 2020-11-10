@@ -10,9 +10,10 @@ import getopt
 
 from modules.soundpipe import *
 
+
 #====================================================
 # some utility functions
-#----------------------------------------------------
+#====================================================
 #---------------------
 # splitpath
 #---------------------
@@ -41,35 +42,60 @@ def splitpath(fname):
 def joinpath(fparts):
     return("".join(fparts))
 
+
 #====================================================
+# Python persistence dictionary
+#====================================================
+
+# Applications using any of the Python versions of soundpipe-style
+# modules must declare this dictionary for persisting 
+# the Python classes corresonding to the underlying ctypes module 
+# data structures IN EACH PYTHON ODULE declaring soundpipe-style
+# modules.  ("Globals" like this are only global to the module.)
+
+o1p_ud_py = {}
+
+#====================================================
+# Modules
+#====================================================
+
+#----------------------------------------------------
 # dummy module
 #----------------------------------------------------
 
 #typedef struct {
 #    SPFLOAT prm;
-#} sp_dmod;
+#} o1p_dmod;
 
-class sp_dmod(Structure):
+class o1p_dmod(Structure):
     _fields_ = [
         ("prm", SPFLOAT)
         ]
 
-#int sp_dmod_create(sp_dmod **p) {
-#    *p = malloc(sizeof(sp_dmod));
+#int o1p_dmod_create(o1p_dmod **p) {
+#    *p = malloc(sizeof(o1p_dmod));
 #
 #    return SP_OK;
 #}
 
 # NOTE: p passed in byref() rather than as pointer.
 
-def sp_dmod_create(p):
-    pp = cast(p, POINTER(POINTER(sp_dmod)))
-    pp[0] = pointer(sp_dmod())
+def o1p_dmod_create(p):
+    pp = cast(p, POINTER(POINTER(o1p_dmod)))
+
+    # the ctypes part
+    cs = o1p_dmod()
+    pp[0] = POINTER(o1p_dmod)(cs)
+
+    # the Python part - persist
+    ids = byref(cs)
+    cskey = "dmod_" + str(ids)
+    o1p_ud_py[cskey] = cs
 
     return(SP_OK)
 
 
-#int sp_dmod_destroy(sp_dmod **p) {
+#int o1p_dmod_destroy(o1p_dmod **p) {
 #    free(*p);
 #
 #    return SP_OK;
@@ -77,24 +103,31 @@ def sp_dmod_create(p):
 
 # NOTE: p passed in byref() rather than as pointer.
 
-def sp_dmod_destroy(p):
-    pp = cast(p, POINTER(POINTER(sp_dmod)))
-    pp[0] = POINTER(sp_dmod)()
+def o1p_dmod_destroy(p):
+    pp = cast(p, POINTER(POINTER(o1p_dmod)))
+
+    # the python part - unpersist
+    ids = byref(pp[0][0])
+    cskey = "dmod_" + str(ids)
+    del o1p_ud_py[cskey]
+
+    # the ctypes part
+    pp[0] = POINTER(o1p_dmod)()    
 
     return(SP_OK)
 
-#int sp_dmod_init(sp_data *sp, sp_dmod *p) {
+#int o1p_dmod_init(sp_data *sp, o1p_dmod *p) {
 #    p->prm = 0.0;
 #
 #    return SP_OK;
 #}
 
-def sp_dmod_init(sp, p):
+def o1p_dmod_init(sp, p):
     p[0].prm = 0.0 
 
     return(SP_OK)
 
-#int sp_dmod_compute(sp_data *sp, sp_dmod *p, SPFLOAT *in, SPFLOAT *out) {
+#int o1p_dmod_compute(sp_data *sp, o1p_dmod *p, SPFLOAT *in, SPFLOAT *out) {
 #    *out = *in;
 # 
 #    return SP_OK;
@@ -102,7 +135,7 @@ def sp_dmod_init(sp, p):
 
 # NOTE: inr and outr passed in byref() rather than as pointers.
 
-def sp_dmod_compute(sp, p, inr, outr):
+def o1p_dmod_compute(sp, p, inr, outr):
      inp = cast(inr, POINTER(SPFLOAT))
      outp = cast(outr, POINTER(SPFLOAT))
      
@@ -110,11 +143,10 @@ def sp_dmod_compute(sp, p, inr, outr):
 
      return(SP_OK)
 
-#====================================================
 
 #====================================================
 # dummy application
-#----------------------------------------------------
+#====================================================
 
 # Notes:
 # 1) an ftable is a canned waveform table
@@ -129,7 +161,7 @@ class UserData(Structure):
     _fields_ = [
         ("wavin", POINTER(sp_wavin)),
         ("wavout", sp_wavoutArrCHANS),
-        ("dmod", POINTER(sp_dmod))
+        ("dmod", POINTER(o1p_dmod))
 #        ("ft", POINTER(sp_ftbl))
         ]
 
@@ -141,14 +173,13 @@ def callback(sp, udata, spin):
     inv = SPFLOAT(spinp[0])
 
     for chan in range(CHANS):
-        sp_dmod_compute(sp, ud.contents.dmod, byref(inv), byref(outv))
+        o1p_dmod_compute(sp, ud[0].dmod, byref(inv), byref(outv))
         sp[0].out[chan] = outv
 
-#====================================================
 
 #====================================================
 # example main
-#----------------------------------------------------
+#====================================================
 def usage():
     print("usage: %s [-ds] [-o name] [name ...]" % sys.argv[0])
 
@@ -255,8 +286,8 @@ def main():
 
     # build and configure soundpipe
 
-    sp_dmod_create(byref(ud.dmod))
-    sp_dmod_init(sp, ud.dmod)
+    o1p_dmod_create(byref(ud.dmod))
+    o1p_dmod_init(sp, ud.dmod)
 
 
     # adjust soundpipe length based on file to have best control
@@ -304,7 +335,7 @@ def main():
 
     # Dismantle soundpipe
  
-    sp_dmod_destroy(byref(ud.dmod))
+    o1p_dmod_destroy(byref(ud.dmod))
 
 
     # Shutdown I/O
