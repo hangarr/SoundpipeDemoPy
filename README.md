@@ -28,7 +28,7 @@ Running
 -------
 These are both run the same way:
 ```
-> cd ./build
+> cd ./src/external
 > ./singlepipe.py [-d] -o ./path/to/dest.wav ./path/to/src.wav
 > ./multipipe.py [-d] -o ./path/to/dest.wav ./path/to/src.wav
 ```
